@@ -1,0 +1,14 @@
+op_code = {
+    'FIN': 0x80, # 1000 0000
+    'OPCODE': 0x0f, # 0000 1111
+    'MASKED': 0x80, # 1000 0000
+    'PLAYLOAD_LEN': 0x7f, # 0111 1111
+    'PLAYLOAD_LEN_EXT16': 0x7e, # 126
+    'PLAYLOAD_LEN_EXT64': 0x7f, # 127
+    'OPCODE_CONTINUATION': 0x0,
+    'OPCODE_TEXT': 0x1,
+    'OPCODE_BINARY': 0x2,
+    'OPCODE_CLOSE': 0x8,
+    'OPCODE_PING': 0x9,
+    'OPCODE_PONG': 0xA
+}
