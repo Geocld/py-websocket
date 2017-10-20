@@ -11,6 +11,7 @@ from py_websocket.op_code import op_code
 
 logger = logging.getLogger(__name__)
 logging.basicConfig()
+logger.setLevel(logging.INFO)
 
 class WebSocketHandler(StreamRequestHandler):
 
@@ -25,7 +26,6 @@ class WebSocketHandler(StreamRequestHandler):
         self.valid_client = False
 
     def handle(self):
-        print 'handler'
         while self.keep_alive:
             if not self.handshake_done:
                 self.handshake()
@@ -80,32 +80,32 @@ class WebSocketHandler(StreamRequestHandler):
         playload_len = b2 & op_code.get('PLAYLOAD_LEN')
 
         if not b1:
-            print('Client closed connection.')
+            logger.info('Client closed connection.')
             self.keep_alive = False
             return
         # 断开
         if opcode == op_code.get('OPCODE_CLOSE'):
-            print('Client asked to close connection.')
+            logger.info('Client asked to close connection.')
             self.keep_alive = False
             return
         # 没有掩码处理
         # print('opcode is %d' % opcode)
         if not masked:
-            print('Client must always be masked')
+            logger.error('Client must always be masked')
             self.keep_alive = False
             return
         if opcode == op_code.get('OPCODE_CONTINUATION'):
-            print('Continuation frames are not supported.')
+            logger.warn('Continuation frames are not supported.')
             return
         if opcode == op_code.get('OPCODE_BINARY'):
-            print('Binary frames are not supported.')
+            logger.warn('Binary frames are not supported.')
             return
         elif opcode == op_code.get('OPCODE_TEXT'):
             opcode_handler = self.server.message_received
         elif opcode == op_code.get('OPCODE_PING'):
             opcode_handler = self.server.ping_received
         elif opcode == op_code.get('OPCODE_PONG'):
-            print('pong frames are not supported.')
+            logger.warn('pong frames are not supported.')
             return
         else:
             logger.warn("Unknown opcode %#x." + opcode)
@@ -124,7 +124,6 @@ class WebSocketHandler(StreamRequestHandler):
         for char in self.read_bytes(playload_len):
             char ^= masks[len(decoded) % 4]
             decoded += chr(char)
-        print decoded
         opcode_handler(self, decoded)
 
     def send_message(self, message, opcode):
@@ -135,14 +134,14 @@ class WebSocketHandler(StreamRequestHandler):
 
     def send_text(self, message, opcode):
         if isinstance(message, bytes):
-            message = try_decode_UTF8(message)
+            message = decode_UTF8(message)
             if not message:
-                print('Can\'t send message, message is not valid UTF-8')
+                logger.error('Can\'t send message, message is not valid UTF-8')
                 return False
         elif isinstance(message, str) or isinstance(message, unicode):
             pass
         else:
-            print('Can\'t send message, message has to be a string or bytes. Given type is %s' % type(message))
+            logger.error('Can\'t send message, message has to be a string or bytes. Given type is %s' % type(message))
             return
         
         header = bytearray()
@@ -170,23 +169,22 @@ class WebSocketHandler(StreamRequestHandler):
         self.request.send(header + playload)
 
     def finish(self):
-        print 'finish'
         self.server.client_left(self)
 
 def encode_to_UTF8(data):
     try:
         return data.encode('UTF-8')
     except UnicodeEncodeError as e:
-        print('Could not encode data to UTF-8 -- %s' % e)
+        logger.error('Could not encode data to UTF-8 -- %s' % e)
     except Exception as e:
         raise(e)
         return False
 
-def try_decode_UTF8(data):
+def decode_UTF8(data):
     try:
         return data.decode('UTF-8')
     except UnicodeEncodeError as e:
-        print('Could not decode data to UTF-8 -- %s' % e)
+        logger.error('Could not decode data to UTF-8 -- %s' % e)
     except Exception as e:
         raise(e)
         return False

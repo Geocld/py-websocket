@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script>
+    var ws;
+    function init() {
+        ws = new WebSocket('ws://localhost:9001')
+
+        ws.onopen = function () {
+            console.log('ws is on open')
+        }
+
+        ws.onmessage = function (e) {
+            console.log('ws is send' + e.data)
+        }
+
+        ws.onclose = function () {
+            console.log('ws is close')
+        }
+
+        ws.onerror = function (e) {
+            console.log(e)
+        }
+    }
+
+    function sendMsg() {
+        var input = document.getElementById('text_input')
+        ws.send(input.value)
+        input.value = ''
+    }
+    function closeWs() {
+        ws.close();
+    }
+</script>
+</head>
+
+
+<body onload="init()">
+    <input id="text_input" type="text">
+    <button onClick="sendMsg()">send</button>
+    <button onClick="closeWs()">close</button>
+</body>
+</html>
